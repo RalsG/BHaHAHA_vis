@@ -4,12 +4,11 @@ import os
 import glob
 
 # Define the folder where the .gp files are stored
-folder_path = r"C:\Users\ralst\Downloads\two_blackholes_collide"
+folder_path = r"<insert folder path here>"
 
 # Get all .gp files in sorted order
 file_list = sorted(glob.glob(f"{folder_path}/*.gp"))
 
-#file_path = r"/home/guest/Downloads/two_blackholes_collide/h_relaxation.t0000000.ah1.gp"
 
 
 # Function that can handle potential blank lines or irregularities in the file
@@ -28,7 +27,7 @@ def parse_gp_file_safe(file_path):
 
 
 # Output directory for frames
-output_dir = "frames2"
+output_dir = "<name a folder to hold the frames>"
 os.makedirs(output_dir, exist_ok=True)
 
 # Set visualization parameters
@@ -36,17 +35,21 @@ mlab.figure(size=(800, 800), bgcolor=(1, 1, 1))  # White background
 mlab.view(azimuth=65, elevation=95)
 
 for i, file in enumerate(file_list):
+	# adjust speed through visualization without wasting time on frames that won't be used
 	if (i<40):
 		pass
 	elif (i<100):
 		if (i%3!=0):
 			continue
+		mlab.text(0.6, 0.8, "3x speed", width=0.25, color=(0, 0, 0))
 	elif (i<1400):
 		if (i%100!=0):
-			continue            		
+			continue  
+		mlab.text(0.6, 0.8, "100x speed", width=0.25, color=(0, 0, 0))
 	elif (i<1460):
 		if (i%3!=0):
-			continue		
+			continue
+		mlab.text(0.6, 0.8, "3x speed", width=0.25, color=(0, 0, 0))
 
 
 	horizon_data = parse_gp_file_safe(file)
@@ -55,7 +58,7 @@ for i, file in enumerate(file_list):
 	x, y, z = horizon_data[:, 0], horizon_data[:, 1], horizon_data[:, 2]
 	vertices = np.column_stack((x, y, z))
 
-	N, M = 80, 161  # Assume 80x161 grid
+	N, M = 80, 161  # BHaHAHA data so far has used 80x161 theta-phi grid
 	x_grid = x.reshape((N, M))
 	y_grid = y.reshape((N, M))
 	z_grid = z.reshape((N, M))
