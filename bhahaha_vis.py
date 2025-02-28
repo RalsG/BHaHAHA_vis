@@ -30,6 +30,42 @@ def parse_gp_file_safe(file_path):
 output_dir = "frames"
 os.makedirs(output_dir, exist_ok=True)
 
+# Define centers of black holes
+centers = [
+    [0, 0, 4],
+    [2, 0, -2 * np.sqrt(3)],
+    [-2, 0, -2 * np.sqrt(3)]
+]
+
+r = 1  # Sphere radius
+
+# grid size, can be much smaller since they're simple spheres
+num_phi = 40
+num_theta = 80
+
+# Create and store sphere coordinates
+sphere_coords = []
+
+for center in centers:
+    x_vals, y_vals, z_vals = [], [], []
+    
+    for phi_idx in range(num_phi + 1):
+        phi = phi_idx * 2 * np.pi / (num_phi - 1)  # Polar angle (0 to 2π)
+        for theta_idx in range(num_theta):
+            theta = theta_idx * np.pi / (num_theta - 1)  # Azimuthal angle (0 to π)
+
+            # Convert spherical to Cartesian coordinates
+            x = center[0] + r * np.sin(theta) * np.cos(phi)
+            y = center[1] + r * np.sin(theta) * np.sin(phi)
+            z = center[2] + r * np.cos(theta)
+
+            x_vals.append(x)
+            y_vals.append(y)
+            z_vals.append(z)
+
+    sphere_coords.append((np.array(x_vals), np.array(y_vals), np.array(z_vals)))
+
+
 # Set visualization parameters
 mlab.figure(size=(800, 800), bgcolor=(1, 1, 1))  # White background
 mlab.view(azimuth=65, elevation=95)
@@ -74,8 +110,16 @@ for i, file in enumerate(file_list):
 	# Clear last frame
 	mlab.clf()
 
+	# First plot inner surfaces so apparent horizon layers over top
+	for x_vals, y_vals, z_vals in sphere_coords:
+		x_grid = x_vals.reshape((num_phi, num_theta))
+		y_grid = y_vals.reshape((num_phi, num_theta))
+		z_grid = z_vals.reshape((num_phi, num_theta))
+
+		mlab.mesh(x_grid, y_grid, z_grid, color=(1, 0, 0))  # Red spheres
+
 	# Now use mlab.mesh for a structured surface
-	mlab.mesh(x_grid, y_grid, z_grid, color=(0, 0, 1), opacity=0.8)
+	mlab.mesh(x_grid, y_grid, z_grid, color=(0, 0, 1), opacity=0.7)
 	iteration_title = "Iteration " + str(i+1) + "e+03"
 	mlab.text(0.35, 0.9, iteration_title, width=0.5, color=(0, 0, 0))
 	if ff_message:
