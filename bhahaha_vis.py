@@ -10,7 +10,6 @@ folder_path = r"C:\Users\ralst\Downloads\two_blackholes_collide"
 file_list = sorted(glob.glob(f"{folder_path}/*.gp"))
 
 
-
 # Function that can handle potential blank lines or irregularities in the file
 def parse_gp_file_safe(file_path):
     data = []
@@ -29,6 +28,42 @@ def parse_gp_file_safe(file_path):
 # Output directory for frames
 output_dir = "frames"
 os.makedirs(output_dir, exist_ok=True)
+
+# Define centers of black holes
+centers = [
+    [0, 0, 1],
+    [0.5 * np.sqrt(3), 0, -0.5],
+    [-0.5* np.sqrt(3), 0, -0.5]
+]
+
+r = 0.25  # Sphere radius
+
+# grid size, can be much smaller since they're simple spheres
+num_phi = 40
+num_theta = 20
+
+# Create and store sphere coordinates
+sphere_coords = []
+
+for center in centers:
+    x_vals, y_vals, z_vals = [], [], []
+    
+    for phi_idx in range(num_phi):
+        phi = phi_idx * 2 * np.pi / (num_phi - 1)  # Polar angle (0 to 2π)
+        for theta_idx in range(num_theta):
+            theta = theta_idx * np.pi / (num_theta - 1)  # Azimuthal angle (0 to π)
+
+            # Convert spherical to Cartesian coordinates
+            x_spheres = center[0] + r * np.sin(theta) * np.cos(phi)
+            y_spheres = center[1] + r * np.sin(theta) * np.sin(phi)
+            z_spheres = center[2] + r * np.cos(theta)
+
+            x_vals.append(x_spheres)
+            y_vals.append(y_spheres)
+            z_vals.append(z_spheres)
+
+    sphere_coords.append((np.array(x_vals), np.array(y_vals), np.array(z_vals)))
+
 
 # Set visualization parameters
 mlab.figure(size=(800, 800), bgcolor=(1, 1, 1))  # White background
@@ -63,20 +98,28 @@ for i, file in enumerate(file_list):
 	horizon_data = parse_gp_file_safe(file)
 
 	# Load x, y, z data from your horizon file
-	x, y, z = horizon_data[:, 0], horizon_data[:, 1], horizon_data[:, 2]
-	vertices = np.column_stack((x, y, z))
+	x_common, y_common, z_common = horizon_data[:, 0], horizon_data[:, 1], horizon_data[:, 2]
+	vertices = np.column_stack((x_common, y_common, z_common))
 
 	N, M = 80, 161  # BHaHAHA data so far has used 80x161 theta-phi grid
-	x_grid = x.reshape((N, M))
-	y_grid = y.reshape((N, M))
-	z_grid = z.reshape((N, M))
+	x_grid_common = x_common.reshape((N, M))
+	y_grid_common = y_common.reshape((N, M))
+	z_grid_common = z_common.reshape((N, M))
 
 	# Clear last frame
 	mlab.clf()
 
+	# First plot inner surfaces so apparent horizon layers over top
+	for x_vals, y_vals, z_vals in sphere_coords:
+		x_grid_spheres = x_vals.reshape((num_phi, num_theta))
+		y_grid_spheres = y_vals.reshape((num_phi, num_theta))
+		z_grid_spheres = z_vals.reshape((num_phi, num_theta))
+
+		mlab.mesh(x_grid_spheres, y_grid_spheres, z_grid_spheres, color=(1, 0, 0))  # Red spheres
+
 	# Now use mlab.mesh for a structured surface
-	mlab.mesh(x_grid, y_grid, z_grid, color=(0, 0, 1), opacity=0.8)
-	iteration_title = "Iteration " + str(i+1) + "e+03"
+	mlab.mesh(x_grid_common, y_grid_common, z_grid_common, color=(0, 0, 1), opacity=0.7)
+	iteration_title = "Iteration " + str(i) + "e+03"
 	mlab.text(0.35, 0.9, iteration_title, width=0.5, color=(0, 0, 0))
 	if ff_message:
 		mlab.text(0.6, 0.8, ff_text, width=0.25, color=(0, 0, 0))
